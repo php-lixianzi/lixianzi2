@@ -2,50 +2,106 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>访客记录分页显示</title>
+    <title>访客记录（手机端卡片版）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 10px;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background: #f8f8f8;
         }
 
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
+        h2 {
             text-align: center;
         }
 
-        th {
-            background: #f4f4f4;
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
         }
 
-        button {
-            margin: 5px;
-            padding: 5px 10px;
+        .pagination button {
+            margin: 0 10px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #4CAF50;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .pagination button:disabled {
+            background: #ccc;
+        }
+
+        #pageInfo {
+            font-size: 14px;
+        }
+
+        .card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .card img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 12px;
+            border: 1px solid #eee;
+        }
+
+        .card-content {
+            flex: 1;
+        }
+
+        .card-content .name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .card-content .info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 响应式优化：屏幕更大时卡片两列排布 */
+        @media (min-width: 600px) {
+            .card-list {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .card {
+                width: calc(50% - 6px);
+            }
         }
     </style>
 </head>
 <body>
 
 <h2>访客记录</h2>
-<div>
+
+<div class="pagination">
     <button id="prevBtn">上一页</button>
     <span id="pageInfo"></span>
     <button id="nextBtn">下一页</button>
 </div>
 
-<table>
-    <thead>
-    <tr>
-        <th>头像</th>
-        <th>昵称</th>
-        <th>浏览次数</th>
-        <th>更新时间</th>
-    </tr>
-    </thead>
-    <tbody id="visitorTableBody"></tbody>
-</table>
+<div id="visitorCards" class="card-list"></div>
 
 <script>
     const apiUrl = 'https://api.hunliji.com/hms/eInvitation/appApi/visitors/cardRecord';
@@ -56,7 +112,7 @@
     };
 
     let currentPage = 1;
-    const perPage = 20; // 根据你的接口返回设定
+    const perPage = 20;
 
     async function fetchVisitors(page = 1) {
         const url = `${apiUrl}?page=${page}&perPage=${perPage}&cardId=124301831`;
@@ -65,7 +121,7 @@
             const data = await res.json();
 
             if (data.success) {
-                renderTable(data.data.list);
+                renderCards(data.data.list);
                 renderPagination(data.data.totalCount, page);
             } else {
                 alert('请求失败: ' + data.status.msg);
@@ -76,18 +132,21 @@
         }
     }
 
-    function renderTable(list) {
-        const tbody = document.getElementById('visitorTableBody');
-        tbody.innerHTML = '';
+    function renderCards(list) {
+        const container = document.getElementById('visitorCards');
+        container.innerHTML = '';
         list.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-      <td><img src="${item.avatar}" alt="头像" width="80"></td>
-      <td>${item.nickName}</td>
-      <td>${item.viewCount}</td>
-      <td>${item.updatedAt}</td>
-    `;
-            tbody.appendChild(tr);
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${item.avatar}" alt="头像">
+                <div class="card-content">
+                    <div class="name">${item.nickName}</div>
+                    <div class="info">浏览次数：${item.viewCount}</div>
+                    <div class="info">更新时间：${item.updatedAt}</div>
+                </div>
+            `;
+            container.appendChild(card);
         });
     }
 
@@ -111,7 +170,6 @@
         fetchVisitors(currentPage);
     });
 
-    // 页面加载时请求第一页
     fetchVisitors(currentPage);
 </script>
 
